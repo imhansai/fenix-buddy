@@ -15,15 +15,21 @@
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
     This is a plug-in for fenix, designed to improve the experience when using fenix.<br>
+    <em>Jump between xml and Java/Kotlin files</em>
   ]]></description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-
+        <codeInsight.lineMarkerProvider language="JAVA"
+                                        implementationClass="dev.fromnowon.fenixbuddy.FenixBuddyJavaLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="kotlin"
+                                        implementationClass="dev.fromnowon.fenixbuddy.FenixBuddyKotlinLineMarkerProvider"/>
     </extensions>
 </idea-plugin>

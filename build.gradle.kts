@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.0"
+    id("org.jetbrains.kotlin.jvm") version "1.9.10"
     id("org.jetbrains.intellij") version "1.16.0"
 }
 
@@ -14,19 +14,34 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
+    // localPath.set("/Users/hansai/Applications/IntelliJ IDEA Community Edition.app/Contents")
     version.set("2023.2.3")
     type.set("IC") // Target IDE Platform
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(
+        listOf(
+            "com.intellij.java",
+            "org.jetbrains.kotlin"
+        )
+    )
 }
 
 tasks {
     // Set the JVM compatibility versions
-    withType<JavaCompile> {
+    compileJava {
         sourceCompatibility = "17"
         targetCompatibility = "17"
     }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compileTestJava {
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
+    }
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = "17"
+    }
+
+    compileTestKotlin {
         kotlinOptions.jvmTarget = "17"
     }
 
