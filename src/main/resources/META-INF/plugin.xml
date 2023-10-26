@@ -28,8 +28,8 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="dev.fromnowon.fenixbuddy.FenixBuddyJavaLineMarkerProvider"/>
+                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.FenixBuddyJavaLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="kotlin"
-                                        implementationClass="dev.fromnowon.fenixbuddy.FenixBuddyKotlinLineMarkerProvider"/>
+                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.FenixBuddyKotlinLineMarkerProvider"/>
     </extensions>
 </idea-plugin>

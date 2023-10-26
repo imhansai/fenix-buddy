@@ -1,16 +1,16 @@
-package dev.fromnowon.fenixbuddy
+package dev.fromnowon.fenixbuddy.linemarkerprovider
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.psi.PsiElement
 
-class FenixBuddyJavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
+class FenixBuddyKotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
     override fun collectNavigationMarkers(
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
-        println("执行了 FenixBuddyJavaLineMarkerProvider")
+        println("执行了 FenixBuddyKotlinLineMarkerProvider")
         super.collectNavigationMarkers(element, result)
     }
 
