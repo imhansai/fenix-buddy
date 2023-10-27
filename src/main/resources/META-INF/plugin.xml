@@ -27,6 +27,7 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <dom.fileDescription implementation="dev.fromnowon.fenixbuddy.xml.FenixDescription"/>
         <codeInsight.lineMarkerProvider language="JAVA"
                                         implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.FenixBuddyJavaLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="kotlin"
