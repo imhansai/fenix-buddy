@@ -1,17 +1,15 @@
 package dev.fromnowon.fenixbuddy.linemarkerprovider
 
-import com.google.common.collect.Collections2
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.CommonProcessors
-import com.intellij.util.xml.DomElement
+import com.intellij.psi.util.PsiLiteralUtil
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
@@ -30,11 +28,11 @@ class FenixBuddyJavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val annotations = element.annotations
         val psiAnnotation = annotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: return
 
-        val processor = CommonProcessors.CollectProcessor<FenixDomElement>()
-
+        // 获取当前Java方法的fenixId
         val psiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
-        if (psiAnnotationMemberValue !is PsiLiteralExpressionImpl) return
-        var fenixIdTag = psiAnnotationMemberValue.value as String?
+        if (psiAnnotationMemberValue !is PsiLiteralExpression) return
+        var fenixIdTag = PsiLiteralUtil.getStringLiteralContent(psiAnnotationMemberValue)
+        // 如果 fenix 没有填写 id，就使用当前类+方法名组装 fenixId
         if (fenixIdTag.isNullOrBlank()) {
             // 命名空间
             val namespace = element.containingClass?.qualifiedName ?: return
@@ -43,30 +41,34 @@ class FenixBuddyJavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
             fenixIdTag = "$namespace.$fenixId"
         }
 
+        // 获取所有 fenix xml 文件
         val project = element.project
         val allScope = GlobalSearchScope.allScope(project)
         val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, allScope)
-        val fenixsDomElementList = Collections2.transform(fileElements) { input -> input.rootElement }
+        val fenixsDomElementList = fileElements.map { it.rootElement }.toMutableList()
+
+        // 当前 fenixId 对应的 xml tag
+        val fenixDomElementList: MutableList<FenixDomElement> = mutableListOf()
         for (fenixsDomElement in fenixsDomElementList) {
             val namespace = fenixsDomElement.namespace.rawText
             for (fenixDomElement in fenixsDomElement.fenixDomElementList) {
                 val fenixId = fenixDomElement.id.rawText
                 val tempFenixIdTag = "$namespace.$fenixId"
                 if (tempFenixIdTag == fenixIdTag) {
-                    processor.process(fenixDomElement)
+                    fenixDomElementList.add(fenixDomElement)
                 }
             }
         }
 
-        val results: Collection<FenixDomElement> = processor.results
-        if (results.isEmpty()) return
+        if (fenixDomElementList.isEmpty()) return
 
         val iconPath = "/image/icon.png"
         val icon = IconLoader.getIcon(iconPath, this::class.java)
+        val targets = fenixDomElementList.map { it.xmlTag }.toMutableList()
         val builder = NavigationGutterIconBuilder
             .create(icon)
             .setAlignment(GutterIconRenderer.Alignment.CENTER)
-            .setTargets(Collections2.transform(results, DomElement::getXmlTag))
+            .setTargets(targets)
             .setTooltipTitle("Navigation To Target In Fenix Mapper Xml")
         result.add(builder.createLineMarkerInfo(element.nameIdentifier!!))
     }
