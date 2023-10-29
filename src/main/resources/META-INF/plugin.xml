@@ -29,8 +29,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <dom.fileDescription implementation="dev.fromnowon.fenixbuddy.xml.FenixDescription"/>
         <codeInsight.lineMarkerProvider language="JAVA"
-                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.FenixBuddyJavaLineMarkerProvider"/>
+                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.JavaLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="kotlin"
-                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.FenixBuddyKotlinLineMarkerProvider"/>
+                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.KotlinLineMarkerProvider"/>
     </extensions>
 </idea-plugin>

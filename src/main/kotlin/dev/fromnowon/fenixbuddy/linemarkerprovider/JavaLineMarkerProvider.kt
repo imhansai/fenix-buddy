@@ -18,7 +18,7 @@ import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 /**
  * 含有特定注解的方法做标记
  */
-class FenixBuddyJavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
+class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
     override fun collectNavigationMarkers(
         element: PsiElement,
