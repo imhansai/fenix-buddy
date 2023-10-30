@@ -16,7 +16,7 @@ import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 
 
 /**
- * 含有特定注解的方法做标记
+ * 含有 QueryFenix 注解的方法做标记
  */
 class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
@@ -28,17 +28,15 @@ class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val annotations = element.annotations
         val psiAnnotation = annotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: return
 
-        // 获取当前Java方法的fenixId
+        // 获取当前方法的 fenixId
         val psiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
         if (psiAnnotationMemberValue !is PsiLiteralExpression) return
-        var fenixIdTag = PsiLiteralUtil.getStringLiteralContent(psiAnnotationMemberValue)
-        // 如果 fenix 没有填写 id，就使用当前类+方法名组装 fenixId
-        if (fenixIdTag.isNullOrBlank()) {
-            // 命名空间
+        var fenixId = PsiLiteralUtil.getStringLiteralContent(psiAnnotationMemberValue)
+        // 如果 fenixId 为空，就使用当前类+方法名组装
+        if (fenixId.isNullOrBlank()) {
             val namespace = element.containingClass?.qualifiedName ?: return
-            // Fenix XML 标签中的 id
-            val fenixId = element.name
-            fenixIdTag = "$namespace.$fenixId"
+            val id = element.name
+            fenixId = "$namespace.$id"
         }
 
         // 获取所有 fenix xml 文件
@@ -52,9 +50,9 @@ class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         for (fenixsDomElement in fenixsDomElementList) {
             val namespace = fenixsDomElement.namespace.rawText
             for (fenixDomElement in fenixsDomElement.fenixDomElementList) {
-                val fenixId = fenixDomElement.id.rawText
-                val tempFenixIdTag = "$namespace.$fenixId"
-                if (tempFenixIdTag == fenixIdTag) {
+                val id = fenixDomElement.id.rawText
+                val tempFenixId = "$namespace.$id"
+                if (tempFenixId == fenixId) {
                     fenixDomElementList.add(fenixDomElement)
                 }
             }
