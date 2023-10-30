@@ -8,7 +8,6 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiLiteralUtil
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
@@ -32,26 +31,30 @@ class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val psiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
         if (psiAnnotationMemberValue !is PsiLiteralExpression) return
         var fenixId = PsiLiteralUtil.getStringLiteralContent(psiAnnotationMemberValue)
+        val namespace = element.containingClass?.qualifiedName ?: return
         // 如果 fenixId 为空，就使用当前类+方法名组装
         if (fenixId.isNullOrBlank()) {
-            val namespace = element.containingClass?.qualifiedName ?: return
             val id = element.name
             fenixId = "$namespace.$id"
+        } else {
+            // 如果缺少了命名空间,使用当前类名填充上
+            if (!fenixId.contains(".")) {
+                fenixId = "$namespace.$fenixId"
+            }
         }
 
         // 获取所有 fenix xml 文件
         val project = element.project
-        val allScope = GlobalSearchScope.allScope(project)
-        val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, allScope)
+        val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, null)
         val fenixsDomElementList = fileElements.map { it.rootElement }.toMutableList()
 
         // 当前 fenixId 对应的 xml tag
         val fenixDomElementList: MutableList<FenixDomElement> = mutableListOf()
         for (fenixsDomElement in fenixsDomElementList) {
-            val namespace = fenixsDomElement.namespace.rawText
+            val tempNamespace = fenixsDomElement.namespace.rawText
             for (fenixDomElement in fenixsDomElement.fenixDomElementList) {
-                val id = fenixDomElement.id.rawText
-                val tempFenixId = "$namespace.$id"
+                val tempId = fenixDomElement.id.rawText
+                val tempFenixId = "$tempNamespace.$tempId"
                 if (tempFenixId == fenixId) {
                     fenixDomElementList.add(fenixDomElement)
                 }
