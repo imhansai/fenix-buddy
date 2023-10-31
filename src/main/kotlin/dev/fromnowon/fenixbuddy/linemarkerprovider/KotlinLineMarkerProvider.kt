@@ -10,7 +10,6 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
-        println("执行了 FenixBuddyKotlinLineMarkerProvider")
         super.collectNavigationMarkers(element, result)
     }
 

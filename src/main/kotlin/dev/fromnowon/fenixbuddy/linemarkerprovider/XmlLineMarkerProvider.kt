@@ -8,11 +8,13 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
+
 
 class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
@@ -43,24 +45,30 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
         // 找到 Java 类
         val project = element.project
-        val psiClass = JavaPsiFacade.getInstance(project).findClass(namespace, GlobalSearchScope.allScope(project))
-            ?: return
-        // 找到对应的方法
-        val psiMethods = psiClass.findMethodsByName(id, true)
-        if (psiMethods.isEmpty()) {
-            println("未找到 $id 方法")
-            return
+        val allScope = GlobalSearchScope.allScope(project)
+        // namespace 是否为完全限定类名对应了不同的查找方法
+        val psiClasses = if (namespace.contains(".")) {
+            JavaPsiFacade.getInstance(project).findClass(namespace, allScope)?.let { mutableListOf(it) }
+        } else {
+            PsiShortNamesCache.getInstance(project).getClassesByName(namespace, allScope).toMutableList()
         }
-        val psiMethod = psiMethods[0]
+        if (psiClasses.isNullOrEmpty()) return
+
+        // 找到对应的方法
+        val psiMethods = psiClasses.flatMap { it.findMethodsByName(id, true).toMutableList() }
+        if (psiMethods.isEmpty()) return
 
         val iconPath = "/image/icon.png"
         val icon = IconLoader.getIcon(iconPath, this::class.java)
         val builder = NavigationGutterIconBuilder
             .create(icon)
             .setAlignment(GutterIconRenderer.Alignment.CENTER)
-            .setTargets(psiMethod)
+            .setTargets(*psiMethods.toTypedArray())
             .setTooltipTitle("Navigation To Target In Fenix Java/Kotlin Class")
-        result.add(builder.createLineMarkerInfo(element))
+
+        // 规避性能警告,使用叶子元素,类型为 XmlToken,值为 <
+        val firstChild = element.firstChild
+        result.add(builder.createLineMarkerInfo(firstChild))
     }
 
 }
