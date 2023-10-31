@@ -32,5 +32,7 @@
                                         implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.JavaLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="kotlin"
                                         implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.KotlinLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="XML"
+                                        implementationClass="dev.fromnowon.fenixbuddy.linemarkerprovider.XmlLineMarkerProvider"/>
     </extensions>
 </idea-plugin>
