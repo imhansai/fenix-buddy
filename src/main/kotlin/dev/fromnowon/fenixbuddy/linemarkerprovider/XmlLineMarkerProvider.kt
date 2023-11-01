@@ -9,7 +9,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
@@ -22,13 +21,7 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
-        // xml 文件根标签是否为 fenixs
         if (element !is XmlTag) return
-        val containingFile = element.containingFile
-        if (containingFile !is XmlFile) return
-        val rootTag = containingFile.rootTag
-        if (rootTag?.name != "fenixs") return
-
         // 是否为 fenix 标签
         val name = element.name
         if (name != "fenix") return
@@ -37,10 +30,10 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val domElement = DomUtil.getDomElement(element)
         if (domElement !is FenixDomElement) return
 
-        // 获取命名空间
+        // 获取 namespace
         val namespace = DomUtil.getParentOfType(domElement, FenixsDomElement::class.java, true)?.namespace?.stringValue
             ?: throw NullPointerException("未获取到命名空间")
-        // 获取id
+        // 获取 id
         val id = domElement.id.rawText ?: throw NullPointerException("未获取到id")
 
         // 找到 Java 类
@@ -48,8 +41,10 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val allScope = GlobalSearchScope.allScope(project)
         // namespace 是否为完全限定类名对应了不同的查找方法
         val psiClasses = if (namespace.contains(".")) {
+            // 完全限定类名查找
             JavaPsiFacade.getInstance(project).findClass(namespace, allScope)?.let { mutableListOf(it) }
         } else {
+            // 类名查找
             PsiShortNamesCache.getInstance(project).getClassesByName(namespace, allScope).toMutableList()
         }
         if (psiClasses.isNullOrEmpty()) return
