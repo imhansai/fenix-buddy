@@ -1,6 +1,10 @@
 # fenix-buddy
 IntelliJ IDEA Fenix 插件
 
+## 获取
+
+[fenix-buddy](https://plugins.jetbrains.com/plugin/23045-fenix-buddy)
+
 ## 起源
 项目中用到了 [fenix](https://github.com/blinkfox/fenix) 库，但是由于没有插件，导致 Java/kotlin 和 xml 之间的跳转比较麻烦，
 需要手动去点击、去查找。不过后来有个老哥写了一款[插件](https://plugins.jetbrains.com/plugin/17158-fenix)，虽然有些问题，但是起码是能用的，不过后来升级了几次版本，插件基本上不生效了。
