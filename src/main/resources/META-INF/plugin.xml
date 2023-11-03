@@ -14,9 +14,22 @@
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
-    This is a plug-in for fenix, designed to improve the experience when using fenix.<br>
-    <em>Jump between xml and Java/Kotlin files</em>
-  ]]></description>
+        This is a plug-in for fenix, designed to improve the experience when using fenix.<br>
+        <em>Jump between xml and Java/Kotlin files</em>
+        ]]></description>
+
+    <!-- https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__change-notes -->
+    <change-notes><![CDATA[
+        <h2>New Features</h2>
+        <ul>
+            <li>Support jumping from kotlin to xml</li>
+        </ul>
+        <h2>新特性</h2>
+        <ul>
+            <li>支持从 kotlin 跳转到 xml</li>
+        </ul>
+        ]]></change-notes>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
