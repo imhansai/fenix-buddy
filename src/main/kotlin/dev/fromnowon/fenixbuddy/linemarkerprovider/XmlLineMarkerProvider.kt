@@ -2,13 +2,7 @@ package dev.fromnowon.fenixbuddy.linemarkerprovider
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
-import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
-import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.util.IconLoader
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomUtil
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
@@ -38,32 +32,11 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
         // 找到 Java 类
         val project = element.project
-        val allScope = GlobalSearchScope.allScope(project)
-        // namespace 是否为完全限定类名对应了不同的查找方法
-        val psiClasses = if (namespace.contains(".")) {
-            // 完全限定类名查找
-            JavaPsiFacade.getInstance(project).findClass(namespace, allScope)?.let { mutableListOf(it) }
-        } else {
-            // 类名查找
-            PsiShortNamesCache.getInstance(project).getClassesByName(namespace, allScope).toMutableList()
-        }
-        if (psiClasses.isNullOrEmpty()) return
-
-        // 找到对应的方法
-        val psiMethods = psiClasses.flatMap { it.findMethodsByName(id, true).toMutableList() }
-        if (psiMethods.isEmpty()) return
-
-        val iconPath = "/image/icon.png"
-        val icon = IconLoader.getIcon(iconPath, this::class.java)
-        val builder = NavigationGutterIconBuilder
-            .create(icon)
-            .setAlignment(GutterIconRenderer.Alignment.CENTER)
-            .setTargets(*psiMethods.toTypedArray())
-            .setTooltipTitle("Navigation To Target In Fenix Java/Kotlin Class")
 
         // 规避性能警告,使用叶子元素,类型为 XmlToken,值为 <
         val firstChild = element.firstChild
-        result.add(builder.createLineMarkerInfo(firstChild))
+
+        searchPsiMethodsAndCreateLineMarkerInfo(project, namespace, id, result, firstChild)
     }
 
 }

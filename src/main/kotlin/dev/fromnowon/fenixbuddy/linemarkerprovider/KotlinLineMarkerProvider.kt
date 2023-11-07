@@ -27,7 +27,13 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
             val referencedName = referenceExpression?.getReferencedName()
             "QueryFenix" == referencedName
         } ?: return
-        // 找到 value 值，即 fenixId
+
+        // 命名空间
+        var namespace: String?
+        // fenixId
+        var fenixId: String?
+
+        // 找到 value 值，即 completeFenixId
         val valueArgumentList = ktAnnotationEntry.valueArgumentList
         val arguments = valueArgumentList?.arguments
         val ktValueArgument = arguments?.find {
@@ -40,22 +46,39 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         }
         val stringTemplateExpression = ktValueArgument?.stringTemplateExpression
         if (stringTemplateExpression?.isPlain() == false) return
-        var fenixId: String? = stringTemplateExpression?.plainContent
+        var completeFenixId: String? = stringTemplateExpression?.plainContent
 
-        // 类名
+
+        // 当前类名作为 namespace，方法名作为 fenixId
         val containingClass = element.containingClass()
         val fqName = containingClass?.fqName
-        val namespace = fqName?.asString() ?: return
-        // 方法名(叶子元素)
         val methodPsiElement = element.nameIdentifier ?: return
-        val id = methodPsiElement.text
-        fenixId = handleFenixId(fenixId, namespace, id)
+        when {
+            completeFenixId.isNullOrBlank() -> {
+                namespace = (fqName?.asString() ?: return)
+                fenixId = methodPsiElement.text
+            }
+
+            else -> {
+                // 需要提取出 namespace 和 fenixId
+                if (completeFenixId.contains(".")) {
+                    namespace = completeFenixId.substringBeforeLast(".")
+                    fenixId = completeFenixId.substringAfterLast(".")
+                } else {
+                    // 当前类名作为 namespace，方法名作为 fenixId
+                    namespace = (fqName?.asString() ?: return)
+                    fenixId = completeFenixId
+                }
+            }
+        }
+
+        if (namespace.isBlank() || fenixId.isNullOrBlank()) return
 
         // 获取所有 fenix xml 文件
         val project = element.project
 
         // 查找 domElement 并创建行标记
-        searchDomElementAndCreateLineMarkerInfo(project, fenixId, result, methodPsiElement)
+        searchDomElementAndCreateLineMarkerInfo(project, namespace, fenixId, result, methodPsiElement)
     }
 
 }
