@@ -116,7 +116,14 @@ fun javaToFenix(
         // 获取当前方法的名称作为id
         fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: psiMethod.name
 
-        if (fenixId != methodName) continue
+        // countMethod
+        var countMethod: String? = null
+        val countMethodPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countMethod")
+        (countMethodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            countMethod = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+
+        if (fenixId != methodName && countMethod != methodName) continue
 
         targets.add(psiMethod)
     }
