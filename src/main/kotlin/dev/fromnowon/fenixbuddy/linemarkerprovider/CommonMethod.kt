@@ -65,7 +65,7 @@ fun searchPsiMethodsAndCreateLineMarkerInfo(
     handleLineMarkerInfo(result, psiMethods, psiElement)
 }
 
-private fun handleLineMarkerInfo(
+fun handleLineMarkerInfo(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     targets: List<PsiElement>,
     psiElement: PsiElement
