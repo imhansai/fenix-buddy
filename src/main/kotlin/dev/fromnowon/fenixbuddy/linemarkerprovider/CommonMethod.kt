@@ -44,7 +44,7 @@ fun fenixToXml(
 fun fenixToJava(
     project: Project,
     namespace: String,
-    fenixId: String,
+    methodNames: List<String>,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
@@ -60,7 +60,11 @@ fun fenixToJava(
     if (psiClasses.isNullOrEmpty()) return
 
     // 找到对应的方法
-    val psiMethods = psiClasses.flatMap { it.findMethodsByName(fenixId, true).toMutableList() }
+    val psiMethods = psiClasses
+        .map { psiClass ->
+            methodNames.map { psiClass.findMethodsByName(it, true).toList() }.flatten()
+        }.flatten()
+
     if (psiMethods.isEmpty()) return
 
     handleLineMarkerInfo(result, psiMethods, psiElement)
@@ -69,11 +73,11 @@ fun fenixToJava(
 fun xmlToFenix(
     project: Project,
     namespace: String,
-    fenixId: String,
+    methodNames: List<String>,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
-    fenixToJava(project, namespace, fenixId, result, psiElement)
+    fenixToJava(project, namespace, methodNames, result, psiElement)
 }
 
 fun javaToFenix(

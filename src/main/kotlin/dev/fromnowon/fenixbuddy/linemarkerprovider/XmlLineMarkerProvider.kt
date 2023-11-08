@@ -36,7 +36,7 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         // 规避性能警告,使用叶子元素,类型为 XmlToken,值为 <
         val firstChild = element.firstChild
 
-        xmlToFenix(project, namespace, id, result, firstChild)
+        xmlToFenix(project, namespace, mutableListOf(id), result, firstChild)
     }
 
 }

@@ -56,7 +56,7 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         // fenixId
         var fenixId: String? = null
 
-        // provider
+        // provider java api 方式
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
         val psiJavaCodeReferenceElement =
             (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
@@ -66,14 +66,24 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         (methodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             fenixId = PsiLiteralUtil.getStringLiteralContent(it)
         }
+        // countMethod
+        var countMethod: String? = null
+        val countMethodPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countMethod")
+        (countMethodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            countMethod = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+
         if (!namespace.isNullOrBlank() && namespace != "java.lang.Void") {
             // 获取当前方法的名称作为id
             fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: element.name
-            // println("跳转到 $namespace $fenixId 方法")
-            fenixToJava(project, namespace, fenixId!!, result, methodPsiElement)
+
+            val methodNames: MutableList<String> = mutableListOf(fenixId!!)
+            countMethod?.let { methodNames.add(it) }
+            fenixToJava(project, namespace, methodNames, result, methodPsiElement)
             return
         }
 
+        // xml 方式
         var completeFenixId: String? = null
         // value
         val valuePsiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
