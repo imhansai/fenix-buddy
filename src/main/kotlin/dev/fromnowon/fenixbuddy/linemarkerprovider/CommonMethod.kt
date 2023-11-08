@@ -5,10 +5,11 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader.getIcon
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.psi.search.searches.AnnotatedElementsSearch
+import com.intellij.psi.util.PsiLiteralUtil
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
@@ -18,7 +19,7 @@ import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
  *
  * https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#companion-object-extensions
  */
-fun searchDomElementAndCreateLineMarkerInfo(
+fun fenixToXml(
     project: Project,
     namespace: String,
     fenixId: String,
@@ -40,7 +41,7 @@ fun searchDomElementAndCreateLineMarkerInfo(
     handleLineMarkerInfo(result, targets, psiElement)
 }
 
-fun searchPsiMethodsAndCreateLineMarkerInfo(
+fun fenixToJava(
     project: Project,
     namespace: String,
     fenixId: String,
@@ -63,6 +64,60 @@ fun searchPsiMethodsAndCreateLineMarkerInfo(
     if (psiMethods.isEmpty()) return
 
     handleLineMarkerInfo(result, psiMethods, psiElement)
+}
+
+fun xmlToFenix(
+    project: Project,
+    namespace: String,
+    fenixId: String,
+    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
+    psiElement: PsiElement
+) {
+    fenixToJava(project, namespace, fenixId, result, psiElement)
+}
+
+fun javaToFenix(
+    project: Project,
+    classQualifiedName: String,
+    methodName: String,
+    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
+    psiElement: PsiElement
+) {
+    val scope = GlobalSearchScope.allScope(project)
+    val annotationClass =
+        JavaPsiFacade.getInstance(project).findClass("com.blinkfox.fenix.jpa.QueryFenix", scope) ?: return
+    val searchPsiMethods = AnnotatedElementsSearch.searchPsiMethods(annotationClass, scope)
+    val psiMethods = searchPsiMethods.findAll()
+
+    val targets: MutableList<PsiMethod> = mutableListOf()
+    for (psiMethod in psiMethods) {
+        // 获取是否有 provider 注解，然后判断有没有 method 属性
+        val psiAnnotations = psiMethod.annotations
+        val psiAnnotation =
+            psiAnnotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: continue
+        // provider
+        val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
+        val psiJavaCodeReferenceElement =
+            (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
+        val qualifiedName = psiJavaCodeReferenceElement?.qualifiedName
+        if (qualifiedName.isNullOrBlank() || qualifiedName == "java.lang.Void" || qualifiedName != classQualifiedName) continue
+
+        // fenixId
+        var fenixId: String? = null
+        // method
+        val methodPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("method")
+        (methodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            fenixId = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+        // 获取当前方法的名称作为id
+        fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: psiMethod.name
+
+        if (fenixId != methodName) continue
+
+        targets.add(psiMethod)
+    }
+
+    handleLineMarkerInfo(result, targets, psiElement)
 }
 
 fun handleLineMarkerInfo(

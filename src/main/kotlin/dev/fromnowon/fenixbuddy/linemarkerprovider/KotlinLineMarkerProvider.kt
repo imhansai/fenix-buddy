@@ -78,7 +78,7 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val project = element.project
 
         // 查找 domElement 并创建行标记
-        searchDomElementAndCreateLineMarkerInfo(project, namespace, fenixId, result, methodPsiElement)
+        fenixToXml(project, namespace, fenixId, result, methodPsiElement)
     }
 
 }
