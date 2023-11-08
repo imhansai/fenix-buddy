@@ -117,6 +117,8 @@ fun javaToFenix(
         targets.add(psiMethod)
     }
 
+    if (targets.isEmpty()) return
+
     handleLineMarkerInfo(result, targets, psiElement)
 }
 
