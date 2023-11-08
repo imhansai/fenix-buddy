@@ -26,17 +26,17 @@ fun searchDomElementAndCreateLineMarkerInfo(
     psiElement: PsiElement
 ) {
     val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, null)
-    val fenixDomElementList = fileElements.asSequence()
+    val targets = fileElements.asSequence()
         .map { it.rootElement }
         .filter { namespace == it.namespace.rawText }
         .map { it.fenixDomElementList }
         .flatten()
         .filter { fenixId == it.id.rawText }
+        .mapNotNull { it.xmlTag?.getAttribute("id")?.valueElement }
         .toList()
 
-    if (fenixDomElementList.isEmpty()) return
+    if (targets.isEmpty()) return
 
-    val targets = fenixDomElementList.mapNotNull { it.xmlTag }
     handleLineMarkerInfo(result, targets, psiElement)
 }
 
