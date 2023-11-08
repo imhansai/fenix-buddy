@@ -8,10 +8,6 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiLiteralUtil
 
-
-/**
- * 含有 QueryFenix 注解的方法做标记
- */
 open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
     override fun collectNavigationMarkers(
@@ -76,10 +72,7 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         if (!namespace.isNullOrBlank() && namespace != "java.lang.Void") {
             // 获取当前方法的名称作为id
             fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: element.name
-
-            val methodNames: MutableList<String> = mutableListOf(fenixId!!)
-            countMethod?.let { methodNames.add(it) }
-            fenixToJava(project, namespace, methodNames, result, methodPsiElement)
+            fenixToJava(project, namespace, fenixId!!, countMethod, result, methodPsiElement)
             return
         }
 
@@ -90,6 +83,13 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         (valuePsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             completeFenixId = PsiLiteralUtil.getStringLiteralContent(it)
         }
+        // countQuery
+        var countQuery: String? = null
+        val countQueryPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countQuery")
+        (countQueryPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            countQuery = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+
         val classQualifiedName = element.containingClass?.qualifiedName
         when {
             completeFenixId.isNullOrBlank() -> {
@@ -111,7 +111,7 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         }
         if (namespace.isNullOrBlank() || fenixId.isNullOrBlank()) return
         // 查找 domElement 并创建行标记
-        fenixToXml(project, namespace, fenixId!!, result, methodPsiElement)
+        fenixToXml(project, namespace, fenixId!!, countQuery, result, methodPsiElement)
     }
 
 }

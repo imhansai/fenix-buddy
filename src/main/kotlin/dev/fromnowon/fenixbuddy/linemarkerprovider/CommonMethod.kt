@@ -23,6 +23,7 @@ fun fenixToXml(
     project: Project,
     namespace: String,
     fenixId: String,
+    countQuery: String?,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
@@ -30,9 +31,8 @@ fun fenixToXml(
     val targets = fileElements.asSequence()
         .map { it.rootElement }
         .filter { namespace == it.namespace.rawText }
-        .map { it.fenixDomElementList }
-        .flatten()
-        .filter { fenixId == it.id.rawText }
+        .flatMap { it.fenixDomElementList }
+        .filter { fenixId == it.id.rawText || countQuery == it.id.rawText }
         .mapNotNull { it.xmlTag?.getAttribute("id")?.valueElement }
         .toList()
 
@@ -44,7 +44,8 @@ fun fenixToXml(
 fun fenixToJava(
     project: Project,
     namespace: String,
-    methodNames: List<String>,
+    fenixId: String,
+    countMethod: String?,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
@@ -60,10 +61,11 @@ fun fenixToJava(
     if (psiClasses.isNullOrEmpty()) return
 
     // 找到对应的方法
-    val psiMethods = psiClasses
-        .map { psiClass ->
-            methodNames.map { psiClass.findMethodsByName(it, true).toList() }.flatten()
-        }.flatten()
+    val psiMethods = psiClasses.flatMap { psiClass ->
+        val fenixIdPsiMethods = psiClass.findMethodsByName(fenixId, true).toList()
+        val countMethodPsiMethods = countMethod?.let { psiClass.findMethodsByName(it, true).toList() }
+        fenixIdPsiMethods + (countMethodPsiMethods ?: emptyList())
+    }
 
     if (psiMethods.isEmpty()) return
 
@@ -73,11 +75,11 @@ fun fenixToJava(
 fun xmlToFenix(
     project: Project,
     namespace: String,
-    methodNames: List<String>,
+    fenixId: String,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
-    fenixToJava(project, namespace, methodNames, result, psiElement)
+    fenixToJava(project, namespace, fenixId, null, result, psiElement)
 }
 
 fun javaToFenix(
