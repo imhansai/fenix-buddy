@@ -21,13 +21,15 @@
     <!-- https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__change-notes -->
     <change-notes><![CDATA[
-        <h2>New Features</h2>
+        按照 com.blinkfox.fenix.jpa.FenixJpaQuery#getSqlInfoByFenix 和 com.blinkfox.fenix.jpa.FenixJpaQuery#getCountSql 的逻辑进行重构
+        <h2>特性</h2>
         <ul>
-            <li>Support jumping from kotlin to xml</li>
+            <li>Java api 方式相互跳转(支持 countMethod)</li>
+            <li>xml 方式相互跳转(支持 countQuery)</li>
         </ul>
-        <h2>新特性</h2>
+        <h2>注意</h2>
         <ul>
-            <li>支持从 kotlin 跳转到 xml</li>
+            <li>kotlin 目前仅支持 xml 方式相互跳转(支持 countQuery)</li>
         </ul>
         ]]></change-notes>
 
