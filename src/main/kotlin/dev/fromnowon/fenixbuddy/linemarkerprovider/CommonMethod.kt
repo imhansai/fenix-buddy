@@ -103,12 +103,7 @@ fun xmlToFenix(
         (valuePsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             completeFenixId = PsiLiteralUtil.getStringLiteralContent(it)
         }
-        val (tempNameSpaceForTempFenixId, tempFenixId) = extractTempInfo(
-            completeFenixId,
-            classQualifiedName,
-            methodName
-        )
-        if (namespace == tempNameSpaceForTempFenixId && id == tempFenixId) {
+        if (isTarget(completeFenixId, classQualifiedName, methodName, namespace, id)) {
             targets.add(psiMethod)
             continue
         }
@@ -119,20 +114,29 @@ fun xmlToFenix(
         (countQueryPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             countQuery = PsiLiteralUtil.getStringLiteralContent(it)
         }
-        val (tempNameSpaceForTempCountQuery, tempCountQuery) = extractTempInfo(
-            countQuery,
-            classQualifiedName,
-            methodName
-        )
-        if (namespace == tempNameSpaceForTempCountQuery && id == tempCountQuery) {
+        if (isTarget(countQuery, classQualifiedName, methodName, namespace, id)) {
             targets.add(psiMethod)
-            continue
         }
     }
 
     if (targets.isEmpty()) return
 
     handleLineMarkerInfo(result, targets, psiElement)
+}
+
+private fun isTarget(
+    completeFenixIdOrCountQuery: String?,
+    classQualifiedName: String?,
+    methodName: String,
+    namespace: String,
+    id: String
+): Boolean {
+    val (tempNameSpace, tempFenixIdOrCountQuery) = extractTempInfo(
+        completeFenixIdOrCountQuery,
+        classQualifiedName,
+        methodName
+    )
+    return namespace == tempNameSpace && id == tempFenixIdOrCountQuery
 }
 
 fun extractTempInfo(
