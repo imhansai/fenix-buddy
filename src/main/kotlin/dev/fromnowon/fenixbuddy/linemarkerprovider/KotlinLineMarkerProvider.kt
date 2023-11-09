@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPlain
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
@@ -16,10 +17,17 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
+        fromQueryFenix(element, result)
+    }
+
+    private fun fromQueryFenix(
+        element: PsiElement,
+        result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
+    ) {
         if (element !is KtNamedFunction) return
         // 是否有 fenix 注解
         val annotations = element.annotationEntries
-        val ktAnnotationEntry = annotations.find {
+        val queryFenixKtAnnotationEntry = annotations.find {
             val typeReference = it.typeReference
             val typeElement = typeReference?.typeElement
             if (typeElement !is KtUserType) return@find false
@@ -27,35 +35,59 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
             val referencedName = referenceExpression?.getReferencedName()
             "QueryFenix" == referencedName
         } ?: return
-        // 找到 value 值，即 fenixId
-        val valueArgumentList = ktAnnotationEntry.valueArgumentList
+
+        val psiElement = element.nameIdentifier ?: return
+        val containingClass = element.containingClass()
+        val classQualifiedName = containingClass?.fqName?.asString() ?: return
+        val methodName = psiElement.text
+        val project = element.project
+
+        // =========== xml 方式 ===========
+        val valueArgumentList = queryFenixKtAnnotationEntry.valueArgumentList
         val arguments = valueArgumentList?.arguments
+        // completeFenixId
+        val completeFenixId = extractAttributeValue(arguments, "value")
+        val (tempNameSpaceForTempFenixId, tempFenixId) = extractTempInfo(
+            completeFenixId,
+            classQualifiedName,
+            methodName
+        )
+
+        // countQuery
+        val countQuery = extractAttributeValue(arguments, "countQuery")
+        val (tempNameSpaceForTempCountQuery, tempCountQuery) = extractTempInfo(
+            countQuery,
+            classQualifiedName,
+            methodName
+        )
+
+        // 查找 domElement 并创建行标记
+        queryFenixToXml(
+            result,
+            psiElement,
+            project,
+            tempNameSpaceForTempFenixId,
+            tempFenixId,
+            tempNameSpaceForTempCountQuery,
+            tempCountQuery
+        )
+    }
+
+    private fun extractAttributeValue(arguments: MutableList<KtValueArgument>?, attributeName: String): String? {
+        var completeFenixId: String? = null
         val ktValueArgument = arguments?.find {
             // 类似 @QueryFenix("queryMyBlogs") 没有 value 的情况
             val argumentName = it.getArgumentName() ?: return@find true
             val referenceExpression = argumentName.referenceExpression
             if (referenceExpression !is KtNameReferenceExpression) return@find false
             val referencedName = referenceExpression.getReferencedName()
-            "value" == referencedName
+            attributeName == referencedName
         }
         val stringTemplateExpression = ktValueArgument?.stringTemplateExpression
-        if (stringTemplateExpression?.isPlain() == false) return
-        var fenixId: String? = stringTemplateExpression?.plainContent
-
-        // 类名
-        val containingClass = element.containingClass()
-        val fqName = containingClass?.fqName
-        val namespace = fqName?.asString() ?: return
-        // 方法名(叶子元素)
-        val methodPsiElement = element.nameIdentifier ?: return
-        val id = methodPsiElement.text
-        fenixId = handleFenixId(fenixId, namespace, id)
-
-        // 获取所有 fenix xml 文件
-        val project = element.project
-
-        // 查找 domElement 并创建行标记
-        searchDomElementAndCreateLineMarkerInfo(project, fenixId, result, methodPsiElement)
+        if (stringTemplateExpression?.isPlain() == true) {
+            completeFenixId = stringTemplateExpression.plainContent
+        }
+        return completeFenixId
     }
 
 }

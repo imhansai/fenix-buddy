@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.fromnowon"
-version = "1.1"
+version = "1.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -50,8 +50,8 @@ tasks {
     }
 
     signPlugin {
-        certificateChainFile.set(File("/Users/hansai/Documents/fenix-buddy/chain.crt"))
-        privateKeyFile.set(File("/Users/hansai/Documents/fenix-buddy/private.pem"))
+        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
+        privateKey.set(System.getenv("PRIVATE_KEY"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
 
