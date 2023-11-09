@@ -3,7 +3,7 @@ package dev.fromnowon.fenixbuddy.linemarkerprovider
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.xml.XmlAttributeImpl
+import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.xml.DomUtil
@@ -32,8 +32,8 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val id = domElement.id.rawText ?: throw NullPointerException("未获取到id")
 
         val project = element.project
-        val xmlAttributeImpl = element.getAttribute("id")?.valueElement as? XmlAttributeImpl ?: return
-        val psiElement = xmlAttributeImpl.findPsiChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) ?: return
+        val xmlAttributeValueImpl = element.getAttribute("id")?.valueElement as? XmlAttributeValueImpl ?: return
+        val psiElement = xmlAttributeValueImpl.findPsiChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) ?: return
 
         xmlToFenix(project, namespace, id, result, psiElement)
     }

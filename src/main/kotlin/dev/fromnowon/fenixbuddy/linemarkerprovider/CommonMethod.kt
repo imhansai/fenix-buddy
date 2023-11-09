@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader.getIcon
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.xml.XmlAttributeImpl
+import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.util.PsiLiteralUtil
@@ -51,8 +51,8 @@ private fun xmlAttributeValues(
         .flatMap { it.fenixDomElementList }
         .filter { tempFenixIdOrCountQuery == it.id.rawText }
         .mapNotNull {
-            val xmlAttributeImpl = it.xmlTag?.getAttribute("id")?.valueElement as? XmlAttributeImpl
-            xmlAttributeImpl?.findPsiChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+            val xmlAttributeValueImpl = it.xmlTag?.getAttribute("id")?.valueElement as? XmlAttributeValueImpl
+            xmlAttributeValueImpl?.findPsiChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
         }
         .toList()
 }
