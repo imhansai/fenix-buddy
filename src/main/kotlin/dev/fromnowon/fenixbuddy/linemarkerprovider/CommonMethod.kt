@@ -6,11 +6,10 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader.getIcon
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.util.PsiLiteralUtil
-import com.intellij.psi.util.elementType
-import com.intellij.psi.xml.XmlToken
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.DomService
@@ -22,14 +21,14 @@ import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
  *
  * https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#companion-object-extensions
  */
-fun fenixToXml(
+fun queryFenixToXml(
+    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
+    psiElement: PsiElement,
     project: Project,
     tempNameSpaceForTempFenixId: String?,
     tempFenixId: String?,
     tempNameSpaceForTempCountQuery: String?,
-    tempCountQuery: String?,
-    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
-    psiElement: PsiElement
+    tempCountQuery: String?
 ) {
     val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, null)
     val targetsForFenixId = xmlAttributeValues(fileElements, tempNameSpaceForTempFenixId, tempFenixId)
@@ -52,21 +51,19 @@ private fun xmlAttributeValues(
         .flatMap { it.fenixDomElementList }
         .filter { tempFenixIdOrCountQuery == it.id.rawText }
         .mapNotNull {
-            val valueElement = it.xmlTag?.getAttribute("id")?.valueElement
-            valueElement?.children?.find { element ->
-                element is XmlToken && element.elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
-            }
+            val xmlAttributeImpl = it.xmlTag?.getAttribute("id")?.valueElement as? XmlAttributeImpl
+            xmlAttributeImpl?.findPsiChildByType(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
         }
         .toList()
 }
 
-fun fenixToJava(
+fun queryFenixToProvider(
+    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
+    psiElement: PsiElement,
     project: Project,
     namespace: String,
     fenixId: String,
-    countMethod: String?,
-    result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
-    psiElement: PsiElement
+    countMethod: String?
 ) {
     // 找到类
     val allScope = GlobalSearchScope.allScope(project)
@@ -94,14 +91,15 @@ fun xmlToFenix(
     val targets: MutableList<PsiMethod> = mutableListOf()
     for (psiMethod in psiMethods) {
         val annotations = psiMethod.annotations
-        val psiAnnotation = annotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: return
+        val queryFenixAnnotation =
+            annotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: return
 
         val classQualifiedName = psiMethod.containingClass?.qualifiedName
         val methodName = psiMethod.name
 
         var completeFenixId: String? = null
         // value
-        val valuePsiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
+        val valuePsiAnnotationMemberValue = queryFenixAnnotation.findAttributeValue("value")
         (valuePsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             completeFenixId = PsiLiteralUtil.getStringLiteralContent(it)
         }
@@ -117,7 +115,7 @@ fun xmlToFenix(
 
         // countQuery
         var countQuery: String? = null
-        val countQueryPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countQuery")
+        val countQueryPsiAnnotationMemberValue = queryFenixAnnotation.findAttributeValue("countQuery")
         (countQueryPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             countQuery = PsiLiteralUtil.getStringLiteralContent(it)
         }
@@ -143,23 +141,23 @@ fun extractTempInfo(
     methodName: String
 ): Pair<String?, String?> {
     val tempNameSpace: String?
-    val tempFenixId: String?
+    val tempFenixIdOrCountQuery: String?
     if (completeFenixIdOrCountQuery.isNullOrBlank()) {
         tempNameSpace = classQualifiedName
-        tempFenixId = methodName
+        tempFenixIdOrCountQuery = methodName
     } else {
         if (completeFenixIdOrCountQuery.contains(".")) {
             tempNameSpace = completeFenixIdOrCountQuery.substringBeforeLast(".")
-            tempFenixId = completeFenixIdOrCountQuery.substringAfterLast(".")
+            tempFenixIdOrCountQuery = completeFenixIdOrCountQuery.substringAfterLast(".")
         } else {
             tempNameSpace = classQualifiedName
-            tempFenixId = completeFenixIdOrCountQuery
+            tempFenixIdOrCountQuery = completeFenixIdOrCountQuery
         }
     }
-    return Pair(tempNameSpace, tempFenixId)
+    return Pair(tempNameSpace, tempFenixIdOrCountQuery)
 }
 
-fun javaToFenix(
+fun providerToQueryFenix(
     project: Project,
     classQualifiedName: String,
     methodName: String,
@@ -179,18 +177,17 @@ fun javaToFenix(
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
         val psiJavaCodeReferenceElement =
             (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
-        val qualifiedName = psiJavaCodeReferenceElement?.qualifiedName
-        if (qualifiedName.isNullOrBlank() || qualifiedName == "java.lang.Void" || qualifiedName != classQualifiedName) continue
+        val provider = psiJavaCodeReferenceElement?.qualifiedName
+        if (provider.isNullOrBlank() || provider == "java.lang.Void" || provider != classQualifiedName) continue
 
-        // fenixId
-        var fenixId: String? = null
         // method
+        var method: String? = null
         val methodPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("method")
         (methodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
-            fenixId = PsiLiteralUtil.getStringLiteralContent(it)
+            method = PsiLiteralUtil.getStringLiteralContent(it)
         }
         // 获取当前方法的名称作为id
-        fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: psiMethod.name
+        method = method.takeUnless { it.isNullOrBlank() } ?: psiMethod.name
 
         // countMethod
         var countMethod: String? = null
@@ -199,7 +196,7 @@ fun javaToFenix(
             countMethod = PsiLiteralUtil.getStringLiteralContent(it)
         }
 
-        if (fenixId != methodName && countMethod != methodName) continue
+        if (method != methodName && countMethod != methodName) continue
 
         targets.add(psiMethod)
     }
