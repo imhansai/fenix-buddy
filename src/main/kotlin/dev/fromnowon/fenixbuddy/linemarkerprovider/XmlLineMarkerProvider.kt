@@ -3,7 +3,10 @@ package dev.fromnowon.fenixbuddy.linemarkerprovider
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlToken
+import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.xml.DomUtil
 import dev.fromnowon.fenixbuddy.xml.FenixDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
@@ -29,13 +32,15 @@ class XmlLineMarkerProvider : RelatedItemLineMarkerProvider() {
         // 获取 id
         val id = domElement.id.rawText ?: throw NullPointerException("未获取到id")
 
-        // 找到 Java 类
         val project = element.project
+        val xmlAttributeValue = element.getAttribute("id")?.valueElement ?: return
 
-        // 规避性能警告,使用叶子元素,类型为 XmlToken,值为 <
-        val firstChild = element.firstChild
+        val psiElements = xmlAttributeValue.children
+        val psiElement = psiElements.find {
+            it is XmlToken && it.elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+        } ?: return
 
-        xmlToFenix(project, namespace, id, result, firstChild)
+        xmlToFenix(project, namespace, id, result, psiElement)
     }
 
 }

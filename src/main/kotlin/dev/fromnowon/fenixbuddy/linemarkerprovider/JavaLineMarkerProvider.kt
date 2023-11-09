@@ -47,16 +47,18 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val methodPsiElement = element.nameIdentifier ?: return
         val project = element.project
 
-        // 命名空间
-        var namespace: String?
-        // fenixId
-        var fenixId: String? = null
+        val classQualifiedName = element.containingClass?.qualifiedName
+        val methodName = element.name
 
-        // provider java api 方式
+        // =========== java api 方式 ===========
+        // provider
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
         val psiJavaCodeReferenceElement =
             (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
-        namespace = psiJavaCodeReferenceElement?.qualifiedName
+        // 命名空间
+        val namespace = psiJavaCodeReferenceElement?.qualifiedName
+        // fenixId
+        var fenixId: String? = null
         // method
         val methodPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("method")
         (methodPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
@@ -71,47 +73,45 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
         if (!namespace.isNullOrBlank() && namespace != "java.lang.Void") {
             // 获取当前方法的名称作为id
-            fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: element.name
+            fenixId = fenixId.takeUnless { it.isNullOrBlank() } ?: methodName
             fenixToJava(project, namespace, fenixId!!, countMethod, result, methodPsiElement)
             return
         }
 
-        // xml 方式
+        // =========== xml 方式 ===========
         var completeFenixId: String? = null
         // value
         val valuePsiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
         (valuePsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             completeFenixId = PsiLiteralUtil.getStringLiteralContent(it)
         }
+        val (tempNameSpaceForTempFenixId, tempFenixId) = extractTempInfo(
+            completeFenixId,
+            classQualifiedName,
+            methodName
+        )
+
         // countQuery
         var countQuery: String? = null
         val countQueryPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countQuery")
         (countQueryPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
             countQuery = PsiLiteralUtil.getStringLiteralContent(it)
         }
+        val (tempNameSpaceForTempCountQuery, tempCountQuery) = extractTempInfo(
+            countQuery,
+            classQualifiedName,
+            methodName
+        )
 
-        val classQualifiedName = element.containingClass?.qualifiedName
-        when {
-            completeFenixId.isNullOrBlank() -> {
-                // 当前类名作为 namespace，方法名作为 fenixId
-                namespace = classQualifiedName
-                fenixId = element.name
-            }
-
-            else -> {
-                // 需要提取出 namespace 和 fenixId
-                if (completeFenixId!!.contains(".")) {
-                    namespace = completeFenixId!!.substringBeforeLast(".")
-                    fenixId = completeFenixId!!.substringAfterLast(".")
-                } else {
-                    namespace = classQualifiedName
-                    fenixId = completeFenixId
-                }
-            }
-        }
-        if (namespace.isNullOrBlank() || fenixId.isNullOrBlank()) return
-        // 查找 domElement 并创建行标记
-        fenixToXml(project, namespace, fenixId!!, countQuery, result, methodPsiElement)
+        fenixToXml(
+            project,
+            tempNameSpaceForTempFenixId,
+            tempFenixId,
+            tempNameSpaceForTempCountQuery,
+            tempCountQuery,
+            result,
+            methodPsiElement
+        )
     }
 
 }

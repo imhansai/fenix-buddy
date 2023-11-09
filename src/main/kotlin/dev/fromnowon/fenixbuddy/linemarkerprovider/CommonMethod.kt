@@ -7,9 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader.getIcon
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.util.PsiLiteralUtil
+import com.intellij.psi.util.elementType
+import com.intellij.psi.xml.XmlToken
+import com.intellij.psi.xml.XmlTokenType
+import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
@@ -21,24 +24,40 @@ import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
  */
 fun fenixToXml(
     project: Project,
-    namespace: String,
-    fenixId: String,
-    countQuery: String?,
+    tempNameSpaceForTempFenixId: String?,
+    tempFenixId: String?,
+    tempNameSpaceForTempCountQuery: String?,
+    tempCountQuery: String?,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
     val fileElements = DomService.getInstance().getFileElements(FenixsDomElement::class.java, project, null)
-    val targets = fileElements.asSequence()
-        .map { it.rootElement }
-        .filter { namespace == it.namespace.rawText }
-        .flatMap { it.fenixDomElementList }
-        .filter { fenixId == it.id.rawText || countQuery == it.id.rawText }
-        .mapNotNull { it.xmlTag?.getAttribute("id")?.valueElement }
-        .toList()
-
+    val targetsForFenixId = xmlAttributeValues(fileElements, tempNameSpaceForTempFenixId, tempFenixId)
+    val targetsForCountQuery = xmlAttributeValues(fileElements, tempNameSpaceForTempCountQuery, tempCountQuery)
+    val targets = targetsForFenixId + targetsForCountQuery
     if (targets.isEmpty()) return
 
     handleLineMarkerInfo(result, targets, psiElement)
+}
+
+private fun xmlAttributeValues(
+    fileElements: List<DomFileElement<FenixsDomElement>>,
+    tempNameSpace: String?,
+    tempFenixIdOrCountQuery: String?
+): List<PsiElement> {
+    if (tempNameSpace.isNullOrBlank()) return mutableListOf()
+    return fileElements.asSequence()
+        .map { it.rootElement }
+        .filter { tempNameSpace == it.namespace.rawText }
+        .flatMap { it.fenixDomElementList }
+        .filter { tempFenixIdOrCountQuery == it.id.rawText }
+        .mapNotNull {
+            val valueElement = it.xmlTag?.getAttribute("id")?.valueElement
+            valueElement?.children?.find { element ->
+                element is XmlToken && element.elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+            }
+        }
+        .toList()
 }
 
 fun fenixToJava(
@@ -49,24 +68,14 @@ fun fenixToJava(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
+    // 找到类
     val allScope = GlobalSearchScope.allScope(project)
-    // namespace 是否为完全限定类名对应了不同的查找方法
-    val psiClasses = if (namespace.contains(".")) {
-        // 完全限定类名查找
-        JavaPsiFacade.getInstance(project).findClass(namespace, allScope)?.let { mutableListOf(it) }
-    } else {
-        // 类名查找
-        PsiShortNamesCache.getInstance(project).getClassesByName(namespace, allScope).toMutableList()
-    }
-    if (psiClasses.isNullOrEmpty()) return
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(namespace, allScope) ?: return
 
-    // 找到对应的方法
-    val psiMethods = psiClasses.flatMap { psiClass ->
-        val fenixIdPsiMethods = psiClass.findMethodsByName(fenixId, true).toList()
-        val countMethodPsiMethods = countMethod?.let { psiClass.findMethodsByName(it, true).toList() }
-        fenixIdPsiMethods + (countMethodPsiMethods ?: emptyList())
-    }
-
+    // 找到方法
+    val fenixIdPsiMethods = psiClass.findMethodsByName(fenixId, true).toList()
+    val countMethodPsiMethods = countMethod?.let { psiClass.findMethodsByName(it, true).toList() }
+    val psiMethods = fenixIdPsiMethods + (countMethodPsiMethods ?: emptyList())
     if (psiMethods.isEmpty()) return
 
     handleLineMarkerInfo(result, psiMethods, psiElement)
@@ -75,11 +84,79 @@ fun fenixToJava(
 fun xmlToFenix(
     project: Project,
     namespace: String,
-    fenixId: String,
+    id: String,
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
-    fenixToJava(project, namespace, fenixId, null, result, psiElement)
+    val psiMethods = searchPsiMethodsByAnnotationClass(project)
+    if (psiMethods.isNullOrEmpty()) return
+
+    val targets: MutableList<PsiMethod> = mutableListOf()
+    for (psiMethod in psiMethods) {
+        val annotations = psiMethod.annotations
+        val psiAnnotation = annotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: return
+
+        val classQualifiedName = psiMethod.containingClass?.qualifiedName
+        val methodName = psiMethod.name
+
+        var completeFenixId: String? = null
+        // value
+        val valuePsiAnnotationMemberValue = psiAnnotation.findAttributeValue("value")
+        (valuePsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            completeFenixId = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+        val (tempNameSpaceForTempFenixId, tempFenixId) = extractTempInfo(
+            completeFenixId,
+            classQualifiedName,
+            methodName
+        )
+        if (namespace == tempNameSpaceForTempFenixId && id == tempFenixId) {
+            targets.add(psiMethod)
+            continue
+        }
+
+        // countQuery
+        var countQuery: String? = null
+        val countQueryPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("countQuery")
+        (countQueryPsiAnnotationMemberValue as? PsiLiteralExpression)?.let {
+            countQuery = PsiLiteralUtil.getStringLiteralContent(it)
+        }
+        val (tempNameSpaceForTempCountQuery, tempCountQuery) = extractTempInfo(
+            countQuery,
+            classQualifiedName,
+            methodName
+        )
+        if (namespace == tempNameSpaceForTempCountQuery && id == tempCountQuery) {
+            targets.add(psiMethod)
+            continue
+        }
+    }
+
+    if (targets.isEmpty()) return
+
+    handleLineMarkerInfo(result, targets, psiElement)
+}
+
+fun extractTempInfo(
+    completeFenixIdOrCountQuery: String?,
+    classQualifiedName: String?,
+    methodName: String
+): Pair<String?, String?> {
+    val tempNameSpace: String?
+    val tempFenixId: String?
+    if (completeFenixIdOrCountQuery.isNullOrBlank()) {
+        tempNameSpace = classQualifiedName
+        tempFenixId = methodName
+    } else {
+        if (completeFenixIdOrCountQuery.contains(".")) {
+            tempNameSpace = completeFenixIdOrCountQuery.substringBeforeLast(".")
+            tempFenixId = completeFenixIdOrCountQuery.substringAfterLast(".")
+        } else {
+            tempNameSpace = classQualifiedName
+            tempFenixId = completeFenixIdOrCountQuery
+        }
+    }
+    return Pair(tempNameSpace, tempFenixId)
 }
 
 fun javaToFenix(
@@ -89,11 +166,8 @@ fun javaToFenix(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
-    val scope = GlobalSearchScope.allScope(project)
-    val annotationClass =
-        JavaPsiFacade.getInstance(project).findClass("com.blinkfox.fenix.jpa.QueryFenix", scope) ?: return
-    val searchPsiMethods = AnnotatedElementsSearch.searchPsiMethods(annotationClass, scope)
-    val psiMethods = searchPsiMethods.findAll()
+    val psiMethods = searchPsiMethodsByAnnotationClass(project)
+    if (psiMethods.isNullOrEmpty()) return
 
     val targets: MutableList<PsiMethod> = mutableListOf()
     for (psiMethod in psiMethods) {
@@ -133,6 +207,16 @@ fun javaToFenix(
     if (targets.isEmpty()) return
 
     handleLineMarkerInfo(result, targets, psiElement)
+}
+
+fun searchPsiMethodsByAnnotationClass(
+    project: Project,
+    annotationQualifiedName: String = "com.blinkfox.fenix.jpa.QueryFenix"
+): MutableCollection<PsiMethod>? {
+    val scope = GlobalSearchScope.allScope(project)
+    val annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationQualifiedName, scope)
+    val searchPsiMethods = annotationClass?.let { AnnotatedElementsSearch.searchPsiMethods(it, scope) }
+    return searchPsiMethods?.findAll()
 }
 
 fun handleLineMarkerInfo(
