@@ -77,8 +77,11 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         var completeFenixId: String? = null
         val ktValueArgument = arguments?.find {
             // 类似 @QueryFenix("queryMyBlogs") 没有 value 的情况
-            val argumentName = it.getArgumentName() ?: return@find true
-            val referenceExpression = argumentName.referenceExpression
+            if (attributeName == "value" && it.getArgumentName() == null) {
+                return@find true
+            }
+            val argumentName = it.getArgumentName()
+            val referenceExpression = argumentName?.referenceExpression
             if (referenceExpression !is KtNameReferenceExpression) return@find false
             val referencedName = referenceExpression.getReferencedName()
             attributeName == referencedName
