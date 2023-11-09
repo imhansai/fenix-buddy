@@ -3,10 +3,9 @@ package dev.fromnowon.fenixbuddy.linemarkerprovider
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPlain
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
@@ -42,9 +41,20 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val methodName = psiElement.text
         val project = element.project
 
-        // =========== xml 方式 ===========
         val valueArgumentList = queryFenixKtAnnotationEntry.valueArgumentList
         val arguments = valueArgumentList?.arguments
+
+        // =========== java api 方式 ===========
+        val provider = extractAttributeValue(arguments, "provider")
+        var method = extractAttributeValue(arguments, "method")
+        val countMethod = extractAttributeValue(arguments, "countMethod")
+        if (!provider.isNullOrBlank() && provider != "java.lang.Void") {
+            method = method.takeUnless { it.isNullOrBlank() } ?: methodName
+            queryFenixToProvider(result, psiElement, project, provider, method!!, countMethod)
+            return
+        }
+
+        // =========== xml 方式 ===========
         // completeFenixId
         val completeFenixId = extractAttributeValue(arguments, "value")
         val (tempNameSpaceForTempFenixId, tempFenixId) = extractTempInfo(
@@ -74,7 +84,7 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
     }
 
     private fun extractAttributeValue(arguments: MutableList<KtValueArgument>?, attributeName: String): String? {
-        var completeFenixId: String? = null
+        var attributeValue: String? = null
         val ktValueArgument = arguments?.find {
             // 类似 @QueryFenix("queryMyBlogs") 没有 value 的情况
             if (attributeName == "value" && it.getArgumentName() == null) {
@@ -86,11 +96,21 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
             val referencedName = referenceExpression.getReferencedName()
             attributeName == referencedName
         }
+
         val stringTemplateExpression = ktValueArgument?.stringTemplateExpression
         if (stringTemplateExpression?.isPlain() == true) {
-            completeFenixId = stringTemplateExpression.plainContent
+            attributeValue = stringTemplateExpression.plainContent
         }
-        return completeFenixId
+        if (!attributeValue.isNullOrBlank()) return attributeValue
+
+        val argumentExpression = ktValueArgument?.getArgumentExpression()
+        val ktClassLiteralExpression = argumentExpression as? KtClassLiteralExpression
+        val ktExpression = ktClassLiteralExpression?.receiverExpression
+        val ktNameReferenceExpression = ktExpression as? KtNameReferenceExpression
+        val reference = ktNameReferenceExpression?.resolveMainReference()
+        attributeValue = reference?.kotlinFqName?.asString()
+
+        return attributeValue
     }
 
 }

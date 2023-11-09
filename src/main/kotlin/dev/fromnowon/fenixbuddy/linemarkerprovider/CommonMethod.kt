@@ -61,16 +61,16 @@ fun queryFenixToProvider(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement,
     project: Project,
-    namespace: String,
-    fenixId: String,
+    classQualifiedName: String,
+    methodName: String,
     countMethod: String?
 ) {
     // 找到类
     val allScope = GlobalSearchScope.allScope(project)
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(namespace, allScope) ?: return
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(classQualifiedName, allScope) ?: return
 
     // 找到方法
-    val fenixIdPsiMethods = psiClass.findMethodsByName(fenixId, true).toList()
+    val fenixIdPsiMethods = psiClass.findMethodsByName(methodName, true).toList()
     val countMethodPsiMethods = countMethod?.let { psiClass.findMethodsByName(it, true).toList() }
     val psiMethods = fenixIdPsiMethods + (countMethodPsiMethods ?: emptyList())
     if (psiMethods.isEmpty()) return
