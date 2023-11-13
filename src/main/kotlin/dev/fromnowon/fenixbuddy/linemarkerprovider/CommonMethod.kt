@@ -15,6 +15,7 @@ import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
+import org.jetbrains.kotlin.asJava.elements.KtLightPsiClassObjectAccessExpression
 
 /**
  * 查找 domElement 并创建行标记
@@ -57,20 +58,26 @@ private fun xmlAttributeValues(
         .toList()
 }
 
+/**
+ * Java 的 provider、method、countMethod 跳转到 java 方法 ✅
+ * Java 的 provider、method、countMethod 跳转到 kotlin 方法 ✅
+ * kotlin 的 provider、method、countMethod 跳转到 kotlin 方法 ✅
+ * kotlin 的 provider、method、countMethod 跳转到 Java 方法 ✅
+ */
 fun queryFenixToProvider(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement,
     project: Project,
-    namespace: String,
-    fenixId: String,
+    classQualifiedName: String,
+    methodName: String,
     countMethod: String?
 ) {
     // 找到类
     val allScope = GlobalSearchScope.allScope(project)
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(namespace, allScope) ?: return
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(classQualifiedName, allScope) ?: return
 
     // 找到方法
-    val fenixIdPsiMethods = psiClass.findMethodsByName(fenixId, true).toList()
+    val fenixIdPsiMethods = psiClass.findMethodsByName(methodName, true).toList()
     val countMethodPsiMethods = countMethod?.let { psiClass.findMethodsByName(it, true).toList() }
     val psiMethods = fenixIdPsiMethods + (countMethodPsiMethods ?: emptyList())
     if (psiMethods.isEmpty()) return
@@ -78,6 +85,9 @@ fun queryFenixToProvider(
     handleLineMarkerInfo(result, psiMethods, psiElement)
 }
 
+/**
+ * xml 跳转到 Java/kotlin @QueryFenix 修饰的方法 ✅
+ */
 fun xmlToFenix(
     project: Project,
     namespace: String,
@@ -161,6 +171,12 @@ fun extractTempInfo(
     return Pair(tempNameSpace, tempFenixIdOrCountQuery)
 }
 
+/**
+ * Java 方法跳转到 Java 的 @QueryFenix 修饰的方法 ✅
+ * Java 方法跳转到 kotlin 的 @QueryFenix 修饰的方法 ✅
+ * kotlin 方法跳转到 kotlin 的 @QueryFenix 修饰的方法 ✅
+ * kotlin 方法跳转到 java 的 @QueryFenix 修饰的方法 ✅
+ */
 fun providerToQueryFenix(
     project: Project,
     classQualifiedName: String,
@@ -179,9 +195,15 @@ fun providerToQueryFenix(
             psiAnnotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: continue
         // provider
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
-        val psiJavaCodeReferenceElement =
-            (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
-        val provider = psiJavaCodeReferenceElement?.qualifiedName
+        if (providerPsiAnnotationMemberValue !is PsiClassObjectAccessExpression) continue
+        val provider: String? = if (providerPsiAnnotationMemberValue is KtLightPsiClassObjectAccessExpression) {
+            // kotlin
+            providerPsiAnnotationMemberValue.operand.type.canonicalText
+        } else {
+            // java
+            providerPsiAnnotationMemberValue.operand.innermostComponentReferenceElement?.qualifiedName
+
+        }
         if (provider.isNullOrBlank() || provider == "java.lang.Void" || provider != classQualifiedName) continue
 
         // method

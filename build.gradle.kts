@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.fromnowon"
-version = "1.2"
+version = "1.3-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -14,7 +14,7 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.2.4")
+    version.set("2023.2.5")
     type.set("IC") // Target IDE Platform
 
     plugins.set(
@@ -50,8 +50,8 @@ tasks {
     }
 
     signPlugin {
-        certificateChainFile.set(File("/Users/hansai/Documents/fenix-buddy/chain.crt"))
-        privateKeyFile.set(File("/Users/hansai/Documents/fenix-buddy/private.pem"))
+        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
+        privateKey.set(System.getenv("PRIVATE_KEY"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
 
