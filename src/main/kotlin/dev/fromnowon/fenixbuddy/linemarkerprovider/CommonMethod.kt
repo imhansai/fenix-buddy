@@ -84,6 +84,9 @@ fun queryFenixToProvider(
     handleLineMarkerInfo(result, psiMethods, psiElement)
 }
 
+/**
+ * xml 跳转到 Java/kotlin @QueryFenix 修饰的方法 ✅
+ */
 fun xmlToFenix(
     project: Project,
     namespace: String,
@@ -91,8 +94,6 @@ fun xmlToFenix(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
-    // TODO: xml 跳转到 Java/kotlin @QueryFenix 修饰的方法
-
     val psiMethods = searchPsiMethodsByAnnotationClass(project)
     if (psiMethods.isNullOrEmpty()) return
 
