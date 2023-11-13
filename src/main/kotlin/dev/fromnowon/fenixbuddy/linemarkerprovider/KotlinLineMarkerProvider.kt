@@ -17,6 +17,28 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
         fromQueryFenix(element, result)
+        toQueryFenix(element, result)
+    }
+
+    private fun toQueryFenix(element: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<*>>) {
+        if (element !is KtNamedFunction) return
+        val annotationEntries = element.annotationEntries
+        val haveQueryFenix = annotationEntries.any {
+            val typeReference = it.typeReference
+            val typeElement = typeReference?.typeElement
+            if (typeElement !is KtUserType) return@any false
+            val referenceExpression = typeElement.referenceExpression
+            val referencedName = referenceExpression?.getReferencedName()
+            "QueryFenix" == referencedName
+        }
+        if (haveQueryFenix) return
+
+        val psiElement = element.nameIdentifier ?: return
+        val classQualifiedName = element.containingClass()?.kotlinFqName?.asString() ?: return
+        val methodName = element.name ?: return
+        val project = element.project
+
+        providerToQueryFenix(project, classQualifiedName, methodName, result, psiElement)
     }
 
     private fun fromQueryFenix(

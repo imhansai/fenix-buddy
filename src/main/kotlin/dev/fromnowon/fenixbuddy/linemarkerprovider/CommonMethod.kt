@@ -172,7 +172,7 @@ fun extractTempInfo(
 /**
  * Java 方法跳转到 Java 的 @QueryFenix 修饰的方法
  * Java 方法跳转到 kotlin 的 @QueryFenix 修饰的方法 ✅
- * kotlin 方法跳转到 kotlin 的 @QueryFenix 修饰的方法
+ * kotlin 方法跳转到 kotlin 的 @QueryFenix 修饰的方法 ✅
  * kotlin 方法跳转到 java 的 @QueryFenix 修饰的方法
  */
 fun providerToQueryFenix(
