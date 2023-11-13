@@ -15,6 +15,7 @@ import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
+import org.jetbrains.kotlin.asJava.elements.KtLightPsiClassObjectAccessExpression
 
 /**
  * 查找 domElement 并创建行标记
@@ -65,6 +66,11 @@ fun queryFenixToProvider(
     methodName: String,
     countMethod: String?
 ) {
+    // TODO: Java 的 provider、method、countMethod 跳转到 java 方法
+    // TODO: Java 的 provider、method、countMethod 跳转到 kotlin 方法
+    // TODO: kotlin 的 provider、method、countMethod 跳转到 kotlin 方法
+    // TODO: kotlin 的 provider、method、countMethod 跳转到 Java 方法
+
     // 找到类
     val allScope = GlobalSearchScope.allScope(project)
     val psiClass = JavaPsiFacade.getInstance(project).findClass(classQualifiedName, allScope) ?: return
@@ -85,6 +91,8 @@ fun xmlToFenix(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement
 ) {
+    // TODO: xml 跳转到 Java/kotlin @QueryFenix 修饰的方法
+
     val psiMethods = searchPsiMethodsByAnnotationClass(project)
     if (psiMethods.isNullOrEmpty()) return
 
@@ -161,6 +169,12 @@ fun extractTempInfo(
     return Pair(tempNameSpace, tempFenixIdOrCountQuery)
 }
 
+/**
+ * Java 方法跳转到 Java 的 @QueryFenix 修饰的方法
+ * Java 方法跳转到 kotlin 的 @QueryFenix 修饰的方法 ✅
+ * kotlin 方法跳转到 kotlin 的 @QueryFenix 修饰的方法
+ * kotlin 方法跳转到 java 的 @QueryFenix 修饰的方法
+ */
 fun providerToQueryFenix(
     project: Project,
     classQualifiedName: String,
@@ -179,9 +193,15 @@ fun providerToQueryFenix(
             psiAnnotations.find { it.hasQualifiedName("com.blinkfox.fenix.jpa.QueryFenix") } ?: continue
         // provider
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
-        val psiJavaCodeReferenceElement =
-            (providerPsiAnnotationMemberValue as? PsiClassObjectAccessExpression)?.operand?.innermostComponentReferenceElement
-        val provider = psiJavaCodeReferenceElement?.qualifiedName
+        if (providerPsiAnnotationMemberValue !is PsiClassObjectAccessExpression) continue
+        val provider: String? = if (providerPsiAnnotationMemberValue is KtLightPsiClassObjectAccessExpression) {
+            // kotlin
+            providerPsiAnnotationMemberValue.operand.type.canonicalText
+        } else {
+            // java
+            providerPsiAnnotationMemberValue.operand.innermostComponentReferenceElement?.qualifiedName
+
+        }
         if (provider.isNullOrBlank() || provider == "java.lang.Void" || provider != classQualifiedName) continue
 
         // method
@@ -215,6 +235,10 @@ fun searchPsiMethodsByAnnotationClass(
     annotationQualifiedName: String = "com.blinkfox.fenix.jpa.QueryFenix"
 ): MutableCollection<PsiMethod>? {
     val scope = GlobalSearchScope.allScope(project)
+
+    // val request = JavaClassFinder.Request(ClassId(FqName("com.blinkfox.fenix.jpa"), Name.identifier("QueryFenix")))
+    // val annotationClassForKotlin = KotlinJavaPsiFacade.getInstance(project).findClass(request, scope)
+
     val annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationQualifiedName, scope)
     val searchPsiMethods = annotationClass?.let { AnnotatedElementsSearch.searchPsiMethods(it, scope) }
     return searchPsiMethods?.findAll()
