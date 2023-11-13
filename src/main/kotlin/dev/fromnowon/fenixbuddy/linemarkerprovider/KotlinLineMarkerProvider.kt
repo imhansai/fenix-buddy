@@ -24,11 +24,9 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         if (element !is KtNamedFunction) return
         val annotationEntries = element.annotationEntries
         val haveQueryFenix = annotationEntries.any {
-            val typeReference = it.typeReference
-            val typeElement = typeReference?.typeElement
+            val typeElement = it.typeReference?.typeElement
             if (typeElement !is KtUserType) return@any false
-            val referenceExpression = typeElement.referenceExpression
-            val referencedName = referenceExpression?.getReferencedName()
+            val referencedName = typeElement.referenceExpression?.getReferencedName()
             "QueryFenix" == referencedName
         }
         if (haveQueryFenix) return

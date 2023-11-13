@@ -237,10 +237,6 @@ fun searchPsiMethodsByAnnotationClass(
     annotationQualifiedName: String = "com.blinkfox.fenix.jpa.QueryFenix"
 ): MutableCollection<PsiMethod>? {
     val scope = GlobalSearchScope.allScope(project)
-
-    // val request = JavaClassFinder.Request(ClassId(FqName("com.blinkfox.fenix.jpa"), Name.identifier("QueryFenix")))
-    // val annotationClassForKotlin = KotlinJavaPsiFacade.getInstance(project).findClass(request, scope)
-
     val annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationQualifiedName, scope)
     val searchPsiMethods = annotationClass?.let { AnnotatedElementsSearch.searchPsiMethods(it, scope) }
     return searchPsiMethods?.findAll()
