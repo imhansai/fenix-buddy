@@ -58,6 +58,12 @@ private fun xmlAttributeValues(
         .toList()
 }
 
+/**
+ * Java 的 provider、method、countMethod 跳转到 java 方法 ✅
+ * Java 的 provider、method、countMethod 跳转到 kotlin 方法 ✅
+ * kotlin 的 provider、method、countMethod 跳转到 kotlin 方法 ✅
+ * kotlin 的 provider、method、countMethod 跳转到 Java 方法 ✅
+ */
 fun queryFenixToProvider(
     result: MutableCollection<in RelatedItemLineMarkerInfo<*>>,
     psiElement: PsiElement,
@@ -66,11 +72,6 @@ fun queryFenixToProvider(
     methodName: String,
     countMethod: String?
 ) {
-    // TODO: Java 的 provider、method、countMethod 跳转到 java 方法
-    // TODO: Java 的 provider、method、countMethod 跳转到 kotlin 方法
-    // TODO: kotlin 的 provider、method、countMethod 跳转到 kotlin 方法
-    // TODO: kotlin 的 provider、method、countMethod 跳转到 Java 方法
-
     // 找到类
     val allScope = GlobalSearchScope.allScope(project)
     val psiClass = JavaPsiFacade.getInstance(project).findClass(classQualifiedName, allScope) ?: return
