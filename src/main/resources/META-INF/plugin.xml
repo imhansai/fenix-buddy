@@ -21,12 +21,10 @@
     <!-- https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__change-notes -->
     <change-notes><![CDATA[
-        <h2>特性</h2>
+        <h2>新增</h2>
         <ul>
-            <li>对 kotlin 的完整支持</li>
+            <li>支持 2024.x 版本</li>
         </ul>
-
-        至此，Java/Kotlin 与 Xml 之间的相互跳转(java api、xml 方式) 全部实现
         ]]></change-notes>
 
     <!-- Product and plugin compatibility requirements.
