@@ -1,11 +1,11 @@
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.16.1"
-    kotlin("jvm") version "1.9.20"
+    id("org.jetbrains.intellij") version "1.17.3"
+    kotlin("jvm") version "1.9.23"
 }
 
 group = "dev.fromnowon"
-version = "1.5-SNAPSHOT"
+version = "1.6-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -14,7 +14,7 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.3")
+    version.set("2024.1")
     type.set("IC") // Target IDE Platform
 
     plugins.set(
@@ -46,7 +46,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("231")
-        untilBuild.set("233.*")
+        // untilBuild.set("241.*")
     }
 
     signPlugin {
