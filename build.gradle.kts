@@ -50,8 +50,8 @@ tasks {
     }
 
     signPlugin {
-        certificateChainFile.set(file("/Users/hansai/Documents/FenixBuddy/chain.crt"))
-        privateKeyFile.set(file("/Users/hansai/Documents/FenixBuddy/private.pem"))
+        certificateChainFile.set(file("/Users/hansai/Documents/fenix-buddy/chain.crt"))
+        privateKeyFile.set(file("/Users/hansai/Documents/fenix-buddy/private.pem"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
 
