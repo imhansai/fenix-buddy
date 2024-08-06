@@ -43,3 +43,5 @@ bin/
 
 ### 自定义 ###
 .idea
+.intellijPlatform
+.kotlin

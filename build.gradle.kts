@@ -1,61 +1,79 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.17.3"
-    kotlin("jvm") version "1.9.23"
+    id("org.jetbrains.intellij.platform") version "2.0.0"
+    kotlin("jvm") version "2.0.0"
 }
 
-group = "dev.fromnowon"
-version = "1.6"
+group = providers.gradleProperty("pluginGroup").get()
+version = providers.gradleProperty("pluginVersion").get()
+
+// Set the JVM language level used to build the project.
+kotlin {
+    jvmToolchain(17)
+}
 
 repositories {
     mavenCentral()
+
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2024.1")
-    type.set("IC") // Target IDE Platform
+dependencies {
+    intellijPlatform {
+        intellijIdeaCommunity("2024.1.5")
 
-    plugins.set(
-        listOf(
-            "com.intellij.java",
-            "org.jetbrains.kotlin"
-        )
-    )
+        bundledPlugin("com.intellij.java")
+        bundledPlugin("org.jetbrains.kotlin")
+
+        pluginVerifier()
+        zipSigner()
+        instrumentationTools()
+
+        testFramework(TestFrameworkType.Platform)
+    }
+
+    testImplementation("junit:junit:4.13.2")
 }
 
-tasks {
-    // Set the JVM compatibility versions
-    compileJava {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    compileTestJava {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
+intellijPlatform {
+    pluginConfiguration {
+        version = providers.gradleProperty("pluginVersion")
+        name = "Fenix Buddy"
+        description = """
+            Helps developers work efficiently with <a href="https://blinkfox.github.io/fenix/">fenix</a>.
 
-    compileKotlin {
-        kotlinOptions.jvmTarget = "17"
+        <h2>Fenix Buddy delivers:</h2>
+        <ul>
+            <li>java/kotlin @QueryFenix annotation jumps to xml node</li>
+            <li>xml node jumps to Java/kotlin @QueryFenix annotation</li>
+        </ul>
+        """.trimIndent()
+        changeNotes = """
+            <h2>新的:</h2>
+        <ul>
+            <li>使用 IntelliJ Platform Gradle Plugin 2.0</li>
+        </ul>
+        """.trimIndent()
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+            untilBuild = providers.gradleProperty("pluginUntilBuild")
+        }
     }
-
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "17"
+    signing {
+        certificateChainFile = file("/Users/hansai/Documents/fenix-buddy/chain.crt")
+        privateKeyFile = file("/Users/hansai/Documents/fenix-buddy/private.pem")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
-
-    patchPluginXml {
-        sinceBuild.set("231")
-        // untilBuild.set("241.*")
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
     }
-
-    signPlugin {
-        certificateChainFile.set(file("/Users/hansai/Documents/fenix-buddy/chain.crt"))
-        privateKeyFile.set(file("/Users/hansai/Documents/fenix-buddy/private.pem"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+    pluginVerification {
+        ides {
+            recommended()
+        }
     }
 }
