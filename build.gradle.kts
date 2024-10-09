@@ -1,9 +1,10 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.0.0"
-    kotlin("jvm") version "2.0.0"
+    id("org.jetbrains.intellij.platform") version "2.0.1"
+    kotlin("jvm") version "2.0.20"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -11,7 +12,7 @@ version = providers.gradleProperty("pluginVersion").get()
 
 // Set the JVM language level used to build the project.
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 repositories {
@@ -24,7 +25,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.1.5")
+        intellijIdeaCommunity("2024.2.1")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
@@ -55,7 +56,7 @@ intellijPlatform {
         changeNotes = """
             <h2>新的:</h2>
         <ul>
-            <li>使用 IntelliJ Platform Gradle Plugin 2.0</li>
+            <li>support k2 mode</li>
         </ul>
         """.trimIndent()
         ideaVersion {
@@ -75,5 +76,17 @@ intellijPlatform {
         ides {
             recommended()
         }
+    }
+}
+
+tasks.named<RunIdeTask>("runIde") {
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Didea.kotlin.plugin.use.k2=true")
+    }
+}
+
+tasks.test {
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Didea.kotlin.plugin.use.k2=true")
     }
 }
