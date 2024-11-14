@@ -3,8 +3,8 @@ import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.0.1"
-    kotlin("jvm") version "2.0.20"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
+    kotlin("jvm") version "2.0.21"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -25,7 +25,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.2.1")
+        intellijIdeaCommunity("2024.3")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
