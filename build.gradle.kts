@@ -3,8 +3,8 @@ import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.1.0"
-    kotlin("jvm") version "2.0.21"
+    id("org.jetbrains.intellij.platform") version "2.5.0"
+    kotlin("jvm") version "2.1.20"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -25,19 +25,19 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.3")
+        local("/Users/hansai/Applications/IntelliJ IDEA Community Edition.app")
+        // intellijIdeaCommunity("2025.1")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
 
         pluginVerifier()
         zipSigner()
-        instrumentationTools()
 
         testFramework(TestFrameworkType.Platform)
     }
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.2")
 }
 
 intellijPlatform {
@@ -56,7 +56,7 @@ intellijPlatform {
         changeNotes = """
             <h2>新的:</h2>
         <ul>
-            <li>support k2 mode</li>
+            <li>支持 2025.1.x 版本</li>
         </ul>
         """.trimIndent()
         ideaVersion {
