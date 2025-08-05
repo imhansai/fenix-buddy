@@ -15,6 +15,7 @@ import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
+import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiClassObjectAccessExpression
 
 /**
@@ -235,7 +236,7 @@ fun providerToQueryFenix(
 fun searchPsiMethodsByAnnotationClass(
     project: Project,
     annotationQualifiedName: String = "com.blinkfox.fenix.jpa.QueryFenix"
-): MutableCollection<PsiMethod>? {
+): @Unmodifiable Collection<PsiMethod>? {
     val scope = GlobalSearchScope.allScope(project)
     val annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationQualifiedName, scope)
     val searchPsiMethods = annotationClass?.let { AnnotatedElementsSearch.searchPsiMethods(it, scope) }

@@ -3,8 +3,8 @@ import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.5.0"
-    kotlin("jvm") version "2.1.20"
+    id("org.jetbrains.intellij.platform") version "2.7.0"
+    kotlin("jvm") version "2.2.0"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -25,8 +25,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        local("/Users/hansai/Applications/IntelliJ IDEA Community Edition.app")
-        // intellijIdeaCommunity("2025.1")
+        intellijIdeaCommunity("2025.2")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
@@ -56,7 +55,7 @@ intellijPlatform {
         changeNotes = """
             <h2>新的:</h2>
         <ul>
-            <li>支持 2025.1.x 版本</li>
+            <li>支持 2025.2.x 版本</li>
         </ul>
         """.trimIndent()
         ideaVersion {
