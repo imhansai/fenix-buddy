@@ -4,7 +4,7 @@ import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 plugins {
     id("java")
     id("org.jetbrains.intellij.platform") version "2.7.0"
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm") version "2.2.21"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
