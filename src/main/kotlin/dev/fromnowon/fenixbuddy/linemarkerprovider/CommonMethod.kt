@@ -16,7 +16,6 @@ import com.intellij.util.xml.DomService
 import dev.fromnowon.fenixbuddy.xml.FenixsDomElement
 import dev.fromnowon.fenixbuddy.xml.FenixsDomFileDescription
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.kotlin.asJava.elements.KtLightPsiClassObjectAccessExpression
 
 /**
  * 查找 domElement 并创建行标记
@@ -197,15 +196,8 @@ fun providerToQueryFenix(
         // provider
         val providerPsiAnnotationMemberValue = psiAnnotation.findAttributeValue("provider")
         if (providerPsiAnnotationMemberValue !is PsiClassObjectAccessExpression) continue
-        val provider: String? = if (providerPsiAnnotationMemberValue is KtLightPsiClassObjectAccessExpression) {
-            // kotlin
-            providerPsiAnnotationMemberValue.operand.type.canonicalText
-        } else {
-            // java
-            providerPsiAnnotationMemberValue.operand.innermostComponentReferenceElement?.qualifiedName
-
-        }
-        if (provider.isNullOrBlank() || provider == "java.lang.Void" || provider != classQualifiedName) continue
+        val provider = providerPsiAnnotationMemberValue.operand.type.canonicalText
+        if (provider.isBlank() || provider == "java.lang.Void" || provider != classQualifiedName) continue
 
         // method
         var method: String? = null

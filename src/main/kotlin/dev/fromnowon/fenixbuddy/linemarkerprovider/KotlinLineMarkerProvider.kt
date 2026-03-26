@@ -3,8 +3,10 @@ package dev.fromnowon.fenixbuddy.linemarkerprovider
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPlain
@@ -127,8 +129,13 @@ class KotlinLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val ktClassLiteralExpression = argumentExpression as? KtClassLiteralExpression
         val ktExpression = ktClassLiteralExpression?.receiverExpression
         val ktNameReferenceExpression = ktExpression as? KtNameReferenceExpression
-        val reference = ktNameReferenceExpression?.resolveMainReference()
-        attributeValue = reference?.kotlinFqName?.asString()
+
+        ktNameReferenceExpression?.let {
+            attributeValue = analyze(it) {
+                val symbol = ktNameReferenceExpression.mainReference.resolveToSymbol() as? KaClassLikeSymbol
+                symbol?.classId?.asFqNameString()
+            }
+        }
 
         return attributeValue
     }

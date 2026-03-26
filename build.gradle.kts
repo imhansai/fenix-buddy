@@ -1,10 +1,11 @@
+
+import com.github.javaparser.printer.concretesyntaxmodel.CsmElement.token
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.tasks.RunIdeTask
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.7.0"
-    kotlin("jvm") version "2.2.21"
+    id("org.jetbrains.intellij.platform") version "2.13.1"
+    kotlin("jvm") version "2.3.20"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -12,7 +13,7 @@ version = providers.gradleProperty("pluginVersion").get()
 
 // Set the JVM language level used to build the project.
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }
 
 repositories {
@@ -25,7 +26,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2025.2")
+        intellijIdea("2026.1")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
@@ -36,7 +37,7 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
     }
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
 }
 
 intellijPlatform {
@@ -55,7 +56,7 @@ intellijPlatform {
         changeNotes = """
             <h2>新的:</h2>
         <ul>
-            <li>支持 2025.2.x 版本</li>
+            <li>支持 2026.1.x 版本</li>
         </ul>
         """.trimIndent()
         ideaVersion {
@@ -75,17 +76,5 @@ intellijPlatform {
         ides {
             recommended()
         }
-    }
-}
-
-tasks.named<RunIdeTask>("runIde") {
-    jvmArgumentProviders += CommandLineArgumentProvider {
-        listOf("-Didea.kotlin.plugin.use.k2=true")
-    }
-}
-
-tasks.test {
-    jvmArgumentProviders += CommandLineArgumentProvider {
-        listOf("-Didea.kotlin.plugin.use.k2=true")
     }
 }

@@ -3,7 +3,7 @@ IntelliJ IDEA Fenix 插件
 
 ## 获取
 
-[fenix-buddy](https://plugins.jetbrains.com/plugin/23045-fenix-buddy)
+[fenix-buddy](https://plugins.jetbrains.com/plugin/24357-fenix-buddy)
 
 ## 起源
 项目中用到了 [fenix](https://github.com/blinkfox/fenix) 库，但是由于没有插件，导致 Java/kotlin 和 xml 之间的跳转比较麻烦，
