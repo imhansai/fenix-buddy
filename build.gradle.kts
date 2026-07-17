@@ -1,4 +1,3 @@
-
 import com.github.javaparser.printer.concretesyntaxmodel.CsmElement.token
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
@@ -56,7 +55,7 @@ intellijPlatform {
         changeNotes = """
             <h2>新的:</h2>
         <ul>
-            <li>支持 2026.1.x 版本</li>
+            <li>支持 2026.2.x 版本</li>
         </ul>
         """.trimIndent()
         ideaVersion {
