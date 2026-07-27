@@ -43,12 +43,6 @@ intellijPlatform {
             <li>xml node jumps to Java/kotlin @QueryFenix annotation</li>
         </ul>
         """.trimIndent()
-        changeNotes = """
-            <h2>新的:</h2>
-        <ul>
-            <li>支持 2026.2.x 版本</li>
-        </ul>
-        """.trimIndent()
         ideaVersion {
             sinceBuild = providers.gradleProperty("sinceBuild")
             untilBuild = providers.gradleProperty("untilBuild")
