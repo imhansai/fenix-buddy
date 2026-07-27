@@ -1,47 +1,38 @@
-import com.github.javaparser.printer.concretesyntaxmodel.CsmElement.token
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.13.1"
-    kotlin("jvm") version "2.3.20"
+    kotlin("jvm") version "2.4.10"
+    id("org.jetbrains.changelog")
+    id("org.jetbrains.intellij.platform")
 }
 
-group = providers.gradleProperty("pluginGroup").get()
-version = providers.gradleProperty("pluginVersion").get()
+group = providers.gradleProperty("group").get()
+version = providers.gradleProperty("version").get()
 
 // Set the JVM language level used to build the project.
 kotlin {
     jvmToolchain(25)
 }
 
-repositories {
-    mavenCentral()
-
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-
 dependencies {
+    testImplementation(libs.junit)
+
     intellijPlatform {
-        intellijIdea("2026.1")
+        intellijIdea("2026.2")
+        testFramework(TestFrameworkType.Platform)
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.kotlin")
 
         pluginVerifier()
         zipSigner()
-
-        testFramework(TestFrameworkType.Platform)
     }
-
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
 }
 
 intellijPlatform {
     pluginConfiguration {
-        version = providers.gradleProperty("pluginVersion")
+        version = providers.gradleProperty("version")
         name = "Fenix Buddy"
         description = """
             Helps developers work efficiently with <a href="https://blinkfox.github.io/fenix/">fenix</a>.
@@ -52,15 +43,9 @@ intellijPlatform {
             <li>xml node jumps to Java/kotlin @QueryFenix annotation</li>
         </ul>
         """.trimIndent()
-        changeNotes = """
-            <h2>新的:</h2>
-        <ul>
-            <li>支持 2026.2.x 版本</li>
-        </ul>
-        """.trimIndent()
         ideaVersion {
-            sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
+            sinceBuild = providers.gradleProperty("sinceBuild")
+            untilBuild = providers.gradleProperty("untilBuild")
         }
     }
     signing {
