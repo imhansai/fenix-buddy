@@ -72,7 +72,7 @@ open class JavaLineMarkerProvider : RelatedItemLineMarkerProvider() {
         if (!provider.isNullOrBlank() && provider != "java.lang.Void") {
             // 获取当前方法的名称作为id
             method = method.takeUnless { it.isNullOrBlank() } ?: methodName
-            queryFenixToProvider(result, psiElement, project, provider, method!!, countMethod)
+            queryFenixToProvider(result, psiElement, project, provider, method, countMethod)
             return
         }
 
