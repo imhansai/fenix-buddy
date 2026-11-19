@@ -2,7 +2,7 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
-    kotlin("jvm") version "2.4.10"
+    kotlin("jvm") version "2.4.21"
     id("org.jetbrains.changelog")
     id("org.jetbrains.intellij.platform")
 }
@@ -19,7 +19,7 @@ dependencies {
     testImplementation(libs.junit)
 
     intellijPlatform {
-        intellijIdea("2026.2")
+        intellijIdea("2026.3")
         testFramework(TestFrameworkType.Platform)
 
         bundledPlugin("com.intellij.java")
